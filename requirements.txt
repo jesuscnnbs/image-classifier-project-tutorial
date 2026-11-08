@@ -4,12 +4,20 @@ matplotlib>=3.7.0
 numpy>=1.24.2
 opencv-python>=4.1.2
 pandas>=2.3.3
+pillow>=10.0.0
 psycopg2-binary>=2.9.3
 pymysql>=1.0.2
 python-dotenv>=0.20.0
 requests>=2.27.1
 scikit-learn
+scipy>=1.11
 seaborn>=0.12.2
 sqlalchemy>=2.0.38
 sympy>=1.10.1
+tensorflow>=2.16
 xgboost
+
+# Opcional, muy recomendable en Apple Silicon: Keras 3 usara PyTorch + GPU (MPS),
+# ~2x mas rapido que TensorFlow/CPU para EfficientNet.
+#   pip install torch
+# y el backend se selecciona solo (ver src/backend.py).

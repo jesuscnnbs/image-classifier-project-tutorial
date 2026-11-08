@@ -2,6 +2,48 @@
 
 Esta plantilla está diseñada para impulsar proyectos de ciencia de datos proporcionando una configuración básica para conexiones de base de datos, procesamiento de datos, y desarrollo de modelos de aprendizaje automático. Incluye una organización estructurada de carpetas para tus conjuntos de datos y un conjunto de paquetes de Python predefinidos necesarios para la mayoría de las tareas de ciencia de datos.
 
+## 🐶🐱 Clasificador de imágenes: perros vs gatos
+
+Proyecto de visión por computador sobre el dataset **Asirra** (25.000 fotos) con **EfficientNet-B0** y Keras 3.
+
+| Fichero | Qué hace |
+|---|---|
+| `src/prepare_data.py` | Split estratificado 80/10/10 con hardlinks en `data/processed/{train,val,test}/{cat,dog}` + `split.csv` |
+| `src/explore.ipynb` | EDA (9 perros, 9 gatos, tamaños), generadores, arquitectura y evaluación |
+| `src/train.py` | Entrena `--mode baseline` (`weights=None`) o `--mode transfer` (ImageNet + fine-tuning), con callbacks y evaluación |
+| `src/app.py` | Inferencia (`--image`) o evaluación (`--evaluate`) |
+| `src/backend.py` | Selecciona el backend de Keras (PyTorch/MPS si está instalado) |
+| `models/` | Checkpoints `.keras`, historiales, métricas y `class_indices.json` |
+
+```bash
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+python src/prepare_data.py
+python src/train.py --mode baseline --tag baseline --epochs 2 --steps-per-epoch 250
+python src/train.py --mode transfer --tag dogs_vs_cats_effnet --epochs 2 --fine-tune-epochs 1
+python src/app.py --image dogs-vs-cats/train/dog.1.jpg
+```
+
+Decisiones técnicas relevantes:
+
+- **224×224**, no 200×200: EfficientNet exige lados múltiplos de 32.
+- **Sin `rescale=1/255`**: EfficientNet normaliza dentro del modelo y espera píxeles en `[0, 255]`.
+- Con `shuffle=False`, `flow_from_directory` sirve primero todas las `cat`; por eso la validación usa `shuffle=True` y el test se evalúa completo.
+- El monitor de los callbacks es `val_accuracy` (en Keras 3 `val_acc` no existe y el checkpoint nunca se guardaría).
+- TensorFlow funciona en CPU, pero `pip install torch` activa MPS y duplica la velocidad en Apple Silicon.
+
+### Resultados
+
+Evaluación sobre 2.500 imágenes de test no vistas durante el entrenamiento (CPU M1, backend PyTorch/MPS):
+
+| Modelo | Entrenamiento | Test accuracy | Test loss |
+|---|---|---|---|
+| EfficientNet-B0 desde cero (`weights=None`) | 2 épocas × 8.000 imgs | 63,0% | 0,669 |
+| EfficientNet-B0 + ImageNet (congelado + fine-tuning) | 2 + 1 épocas × 8.000 imgs | **98,8%** | 0,032 |
+
+El baseline supera el 50% de azar pero está lejos de su techo: se queda en 2 épocas por el coste de entrenar desde cero en CPU (≈30 min/época). Con el run completo (`--epochs 10`) sube bastante. El transfer learning alcanza el 98,8% en ~17 min y supera ampliamente el 80% del SVM de 2007. Detalle por clase y matriz de confusión en `models/*_metrics.json`.
+
 ## Estructura
 
 El proyecto está organizado de la siguiente manera:

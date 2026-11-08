@@ -1,3 +1,15 @@
 __pycache__
 .env
 .learn
+.venv
+.DS_Store
+
+# Datos: el dataset original y el split generado no se versionan
+dogs-vs-cats/
+data/processed/
+
+# Artefactos de entrenamiento
+models/*.keras
+models/*.h5
+models/*.json
+models/*.log
